@@ -109,22 +109,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function fetchPollinationsModels() {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        fetch("https://text.pollinations.ai/models", {
+        window.pollinationsFetch("https://text.pollinations.ai/models", {
             method: "GET",
             headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-            signal: controller.signal
+            cache: "no-store"
         })
-            .then(res => {
-                clearTimeout(timeoutId);
-                if (!res.ok) {
-                    throw new Error(`HTTP error! Status: ${res.status}`);
-                }
-                return res.json();
-            })
+            .then(res => res.json())
             .then(models => {
                 modelSelect.innerHTML = "";
                 let hasValidModel = false;
@@ -187,12 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             })
             .catch(err => {
-                clearTimeout(timeoutId);
-                if (err.name === "AbortError") {
-                    console.error("Fetch timed out");
-                } else {
-                    console.error("Failed to fetch text models:", err);
-                }
+                console.error("Failed to fetch text models:", err);
                 modelSelect.innerHTML = "";
                 const fallbackOpt = document.createElement("option");
                 fallbackOpt.value = "unity";
