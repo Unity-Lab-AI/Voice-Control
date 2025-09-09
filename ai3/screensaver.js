@@ -151,7 +151,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                const response = await fetch(`https://text.pollinations.ai/openai?safe=false&seed=${seed}`, {
+                const apiUrl = withPollinationsToken(`https://text.pollinations.ai/openai?safe=false&seed=${seed}`);
+                const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", Accept: "application/json" },
                     body: JSON.stringify(body),
