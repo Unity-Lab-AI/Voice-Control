@@ -139,21 +139,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    async function fetchWithRetry(url, options = {}, retries = 6, delay = 4000) {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                const res = await fetch(url, options);
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                return res;
-            } catch (err) {
-                if (attempt === retries) throw err;
-                const wait = delay * Math.pow(2, attempt);
-                console.warn(`Fetch attempt ${attempt + 1} failed. Retrying in ${wait / 1000}s...`, err);
-                await new Promise(r => setTimeout(r, wait));
-            }
-        }
-    }
-
     async function fetchDynamicPromptWithRetry(maxRetries = 6, delayMs = 4000) {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
         const messages = [
@@ -168,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiUrl = `https://text.pollinations.ai/openai?seed=${seed}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
         try {
-            const response = await fetchWithRetry(apiUrl, {
+            const response = await window.pollinationsFetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify(body),
