@@ -209,17 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     fetchPollinationsModels();
-                const currentSession = Storage.getCurrentSession();
-                if (currentSession && currentSession.model && currentSession.model !== "unity") {
-                    const sessOpt = document.createElement("option");
-                    sessOpt.value = currentSession.model;
-                    sessOpt.textContent = `${currentSession.model} (From Session - May Be Unavailable)`;
-                    modelSelect.appendChild(sessOpt);
-                    modelSelect.value = currentSession.model;
-                }
-            });
-    }
-    fetchPollinationsModels();
 
     newSessionBtn.addEventListener("click", () => {
         const newSess = Storage.createSession("New Chat");
