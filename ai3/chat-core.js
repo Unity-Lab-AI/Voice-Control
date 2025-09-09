@@ -1,5 +1,36 @@
-// Global helper to retry Pollinations text API requests with exponential backoff
-window.pollinationsFetch = async function(url, options = {}, retries = 6, delay = 4000) {
+// Global config for Pollinations API settings (safe mode and token)
+window._pollinationsAPIConfig = window._pollinationsAPIConfig || {
+    safe: false,
+    // Token can be provided via process.env or a global variable set in a separate script.
+    token:
+        (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        window.POLLINATIONS_TOKEN ||
+        ""
+};
+
+// Global helper to retry Pollinations text API requests with exponential backoff.
+// Automatically appends `safe` and `token` query parameters if not present.
+window.pollinationsFetch = async function (url, options = {}, retries = 6, delay = 4000) {
+    const cfg = window._pollinationsAPIConfig || {};
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes("pollinations.ai")) {
+            if (cfg.safe !== undefined && !urlObj.searchParams.has("safe")) {
+                urlObj.searchParams.set("safe", cfg.safe ? "true" : "false");
+            }
+            const token =
+                cfg.token ||
+                (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+                window.POLLINATIONS_TOKEN;
+            if (token && !urlObj.searchParams.has("token")) {
+                urlObj.searchParams.set("token", token);
+            }
+        }
+        url = urlObj.toString();
+    } catch (err) {
+        console.warn("Invalid URL provided to pollinationsFetch:", url, err);
+    }
+
     for (let attempt = 0; attempt <= retries; attempt++) {
         try {
             const response = await fetch(url, options);
@@ -9,17 +40,22 @@ window.pollinationsFetch = async function(url, options = {}, retries = 6, delay 
             return response;
         } catch (err) {
             if (attempt === retries) throw err;
-            console.warn(`Pollinations fetch attempt ${attempt + 1} failed, retrying in ${delay/1000}s...`, err);
-            await new Promise(res => setTimeout(res, delay));
+            console.warn(
+                `Pollinations fetch attempt ${attempt + 1} failed, retrying in ${delay / 1000}s...`,
+                err
+            );
+            await new Promise((res) => setTimeout(res, delay));
             delay *= 2;
         }
     }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    window._pollinationsAPIConfig = {
-        safe: false
-    };
+    window._pollinationsAPIConfig.token =
+        window._pollinationsAPIConfig.token ||
+        (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        window.POLLINATIONS_TOKEN ||
+        "";
 
     const chatBox = document.getElementById("chat-box");
     const chatInput = document.getElementById("chat-input");
