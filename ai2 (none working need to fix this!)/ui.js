@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 models.forEach(m => {
-                    if (m && m.name && m.type !== "safety") {
+                    if (m && m.name) {
                         const opt = document.createElement("option");
                         opt.value = m.name;
                         opt.textContent = m.description || m.name;
