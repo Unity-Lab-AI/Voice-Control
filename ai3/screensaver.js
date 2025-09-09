@@ -139,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    async function fetchDynamicPromptWithRetry(maxRetries = 3, delayMs = 2000) {
+    async function fetchDynamicPrompt() {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
         const messages = [
             { role: "system", content: "Generate unique, wild image prompts as text only, under 100 characters." },
@@ -153,30 +153,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiUrl = `https://text.pollinations.ai/openai?seed=${seed}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
 
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", Accept: "application/json" },
-                    body: JSON.stringify(body),
-                    cache: "no-store",
-                });
+        const response = await window.pollinationsFetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(body),
+            cache: "no-store",
+        });
 
-                if (!response.ok) throw new Error(`Pollinations error: ${response.status}`);
-                const data = await response.json();
-                let generatedPrompt = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.response;
-                if (!generatedPrompt) throw new Error("No prompt returned from API");
-                if (generatedPrompt.length > 100) generatedPrompt = generatedPrompt.substring(0, 100);
-                console.log("Received new prompt from API:", generatedPrompt);
-                return generatedPrompt;
-            } catch (err) {
-                console.error(`Attempt ${attempt}/${maxRetries} failed to fetch dynamic prompt:`, err);
-                if (attempt === maxRetries) {
-                    throw new Error("Max retries reached. Could not fetch a prompt from the API.");
-                }
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-            }
-        }
+        const data = await response.json();
+        let generatedPrompt = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.response;
+        if (!generatedPrompt) throw new Error("No prompt returned from API");
+        if (generatedPrompt.length > 100) generatedPrompt = generatedPrompt.substring(0, 100);
+        console.log("Received new prompt from API:", generatedPrompt);
+        return generatedPrompt;
     }
 
     async function updatePrompt() {
@@ -185,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         isFetchingPrompt = true;
         try {
-            const newPrompt = await fetchDynamicPromptWithRetry();
+            const newPrompt = await fetchDynamicPrompt();
             promptInput.value = newPrompt;
             settings.prompt = newPrompt;
             saveScreensaverSettings();

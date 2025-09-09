@@ -521,16 +521,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const body = { messages, model: selectedModel, nonce };
         const apiUrl = `https://text.pollinations.ai/openai`;
         console.log("Sending API request with payload:", JSON.stringify(body));
-        fetch(apiUrl, {
+        window.pollinationsFetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(body),
             cache: "no-store",
         })
-            .then(res => {
-                if (!res.ok) throw new Error(`Pollinations error: ${res.status}`);
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
                 console.log("API response received:", data);
                 loadingDiv.remove();
