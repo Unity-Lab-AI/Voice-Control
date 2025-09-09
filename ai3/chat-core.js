@@ -46,24 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let voiceInputBtn = null;
     let slideshowInterval = null;
 
-    async function fetchWithRetry(url, options = {}, retries = 6, delay = 4000) {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                const res = await fetch(url, options);
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                return res;
-            } catch (err) {
-                if (attempt === retries) throw err;
-                const wait = delay * Math.pow(2, attempt);
-                console.warn(`Fetch attempt ${attempt + 1} failed. Retrying in ${wait / 1000}s...`, err);
-                await new Promise(r => setTimeout(r, wait));
-            }
-        }
-    }
-
     async function sendUnityCommand(command, originalMessage = "") {
         try {
-            const res = await fetchWithRetry("https://text.pollinations.ai/unity", {
+            const res = await window.pollinationsFetch("https://text.pollinations.ai/unity", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify({ command, message: originalMessage, build: true }),

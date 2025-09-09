@@ -11,20 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
         { pattern: /display\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
     ];
     const randomSeed = () => Math.floor(Math.random() * 1000000).toString();
-    async function fetchWithRetry(url, options = {}, retries = 6, delay = 4000) {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                const res = await fetch(url, options);
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                return res;
-            } catch (err) {
-                if (attempt === retries) throw err;
-                const wait = delay * Math.pow(2, attempt);
-                console.warn(`Fetch attempt ${attempt + 1} failed. Retrying in ${wait / 1000}s...`, err);
-                await new Promise(r => setTimeout(r, wait));
-            }
-        }
-    }
     const generateSessionTitle = messages => {
         let title = messages.find(m => m.role === "ai")?.content.replace(/[#_*`]/g, "").trim() || "New Chat";
         return title.length > 50 ? title.substring(0, 50) + "..." : title;
@@ -535,8 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const body = { messages, model: selectedModel, nonce };
         const apiUrl = `https://text.pollinations.ai/openai`;
         console.log("Sending API request with payload:", JSON.stringify(body));
-        fetchWithRetry(apiUrl, {
-
+        window.pollinationsFetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(body),

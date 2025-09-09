@@ -108,24 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
         changeTheme(themeSelectSettings.value);
     });
 
-    async function fetchWithRetry(url, options = {}, retries = 6, delay = 4000) {
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                const res = await fetch(url, options);
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-                return res;
-            } catch (err) {
-                if (attempt === retries) throw err;
-                const wait = delay * Math.pow(2, attempt);
-                console.warn(`Fetch attempt ${attempt + 1} failed. Retrying in ${wait / 1000}s...`, err);
-                await new Promise(r => setTimeout(r, wait));
-            }
-        }
-    }
-
     async function fetchPollinationsModels() {
         try {
-            const res = await fetchWithRetry("https://text.pollinations.ai/models", {
+            const res = await window.pollinationsFetch("https://text.pollinations.ai/models", {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 cache: "no-store"
@@ -209,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     fetchPollinationsModels();
-
     newSessionBtn.addEventListener("click", () => {
         const newSess = Storage.createSession("New Chat");
         Storage.setCurrentSessionId(newSess.id);
