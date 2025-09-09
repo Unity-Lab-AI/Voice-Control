@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-        fetch("https://text.pollinations.ai/models", {
+        fetch(withPollinationsToken("https://text.pollinations.ai/models"), {
             method: "GET",
             headers: { "Content-Type": "application/json" },
             cache: "no-store",

@@ -553,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedModel = modelSelect.value || currentSession.model || "unity";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, stream: false, nonce };
-        const apiUrl = `https://text.pollinations.ai/openai?safe=false`;
+        const apiUrl = withPollinationsToken('https://text.pollinations.ai/openai?safe=false');
         console.log("Sending API request with payload:", JSON.stringify(body));
         fetch(apiUrl, {
             method: "POST",
