@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function fetchDynamicPrompt() {
-        const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
+        const metaPrompt = "Generate an image prompt of something fucking new and crazy wild only from your mind! Respond with text only.";
         const messages = [
             { role: "system", content: "Generate unique, wild image prompts as text only, under 100 characters." },
             { role: "user", content: metaPrompt }
