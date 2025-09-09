@@ -194,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     fetchPollinationsModels();
-
     newSessionBtn.addEventListener("click", () => {
         const newSess = Storage.createSession("New Chat");
         Storage.setCurrentSessionId(newSess.id);
