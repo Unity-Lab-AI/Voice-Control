@@ -125,25 +125,26 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             models.forEach(m => {
-                if (m && m.name && m.type !== "safety") {
+                if (m && m.name) {
                     const opt = document.createElement("option");
                     opt.value = m.name;
                     opt.textContent = m.description || m.name;
-                        let tooltip = m.description || m.name;
-                        if (m.censored !== undefined) {
-                            tooltip += m.censored ? " (Censored)" : " (Uncensored)";
-                        }
-                        if (m.reasoning) tooltip += " | Reasoning";
-                        if (m.vision) tooltip += " | Vision";
-                        if (m.audio) tooltip += " | Audio: " + (m.voices ? m.voices.join(", ") : "N/A");
-                        if (m.provider) tooltip += " | Provider: " + m.provider;
 
-                        opt.title = tooltip;
-                        modelSelect.appendChild(opt);
-                        hasValidModel = true;
-                    } else {
-                        console.warn("Skipping invalid model entry:", m);
+                    let tooltip = m.description || m.name;
+                    if (m.censored !== undefined) {
+                        tooltip += m.censored ? " (Censored)" : " (Uncensored)";
                     }
+                    if (m.reasoning) tooltip += " | Reasoning";
+                    if (m.vision) tooltip += " | Vision";
+                    if (m.audio) tooltip += " | Audio: " + (m.voices ? m.voices.join(", ") : "N/A");
+                    if (m.provider) tooltip += " | Provider: " + m.provider;
+
+                    opt.title = tooltip;
+                    modelSelect.appendChild(opt);
+                    hasValidModel = true;
+                } else {
+                    console.warn("Skipping invalid model entry:", m);
+                }
             });
 
             if (!hasValidModel) {

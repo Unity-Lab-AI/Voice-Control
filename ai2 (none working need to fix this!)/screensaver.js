@@ -146,10 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
             { role: "user", content: metaPrompt }
         ];
         const seed = generateSeed();
-        const textModelSelect = document.getElementById("model-select");
-        const selectedModel = textModelSelect?.value || (window.Storage?.getCurrentSession?.().model) || "unity";
 
-        const body = { messages, model: selectedModel, nonce: Date.now().toString() + Math.random().toString(36).substring(2) };
+        const body = {
+            messages,
+            model: "unity",
+            nonce: Date.now().toString() + Math.random().toString(36).substring(2)
+        };
         const apiUrl = `https://text.pollinations.ai/openai?seed=${seed}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
 
