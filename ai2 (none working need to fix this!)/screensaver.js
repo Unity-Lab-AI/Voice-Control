@@ -149,8 +149,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const textModelSelect = document.getElementById("model-select");
         const selectedModel = textModelSelect?.value || (window.Storage?.getCurrentSession?.().model) || "unity";
 
-        const body = { messages, model: selectedModel, nonce: Date.now().toString() + Math.random().toString(36).substring(2) };
-        const apiUrl = `https://text.pollinations.ai/openai?seed=${seed}`;
+        const body = { messages, model: selectedModel, stream: false, nonce: Date.now().toString() + Math.random().toString(36).substring(2) };
+        const apiUrl = `https://text.pollinations.ai/openai?safe=false&seed=${seed}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
