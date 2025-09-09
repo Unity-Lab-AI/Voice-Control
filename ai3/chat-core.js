@@ -1,6 +1,5 @@
-// Global config for Pollinations API settings (safe mode and token)
+// Global config for Pollinations API token
 window._pollinationsAPIConfig = window._pollinationsAPIConfig || {
-    safe: false,
     // Token can be provided via process.env or a global variable set in a separate script.
     token:
         (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
@@ -9,15 +8,12 @@ window._pollinationsAPIConfig = window._pollinationsAPIConfig || {
 };
 
 // Global helper to retry Pollinations text API requests with exponential backoff.
-// Automatically appends `safe` and `token` query parameters if not present.
+// Automatically appends `token` query parameter if not present.
 window.pollinationsFetch = async function (url, options = {}, retries = 6, delay = 4000) {
     const cfg = window._pollinationsAPIConfig || {};
     try {
         const urlObj = new URL(url);
         if (urlObj.hostname.includes("pollinations.ai")) {
-            if (cfg.safe !== undefined && !urlObj.searchParams.has("safe")) {
-                urlObj.searchParams.set("safe", cfg.safe ? "true" : "false");
-            }
             const token =
                 cfg.token ||
                 (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
@@ -652,7 +648,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     imagePrompt = imagePrompt.slice(0, 100);
                     const seed = randomSeed();
-                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?height=512&width=512&seed=${seed}&model=flux&private=true&safe=false&enhanced=true&nolog=true`;
+                    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?height=512&width=512&seed=${seed}`;
                     aiContent += `\n\n**Generated Image:**\n${imageUrl}`;
                 }
                 const imgRegex = /(https:\/\/image\.pollinations\.ai\/prompt\/[^ ]+)/g;
