@@ -536,6 +536,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiUrl = `https://text.pollinations.ai/openai`;
         console.log("Sending API request with payload:", JSON.stringify(body));
         fetchWithRetry(apiUrl, {
+        window.pollinationsFetch(apiUrl, {
+
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(body),

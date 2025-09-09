@@ -570,6 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiUrl = `https://text.pollinations.ai/openai`;
         console.log("Sending API request with payload:", JSON.stringify(body));
         fetchWithRetry(apiUrl, {
+        window.pollinationsFetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(body),
@@ -580,6 +581,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log("API response received:", data);
                 loadingDiv.remove();
                 let aiContent = extractAIContent(data);
+
                 let imageUrls = [];
                 if (isCodeRequest && !isBothRequested) {
                     const codeRegex = /```(\w+)\n([\s\S]*?)\n```/;

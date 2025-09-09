@@ -186,14 +186,13 @@ document.addEventListener("DOMContentLoaded", () => {
             throw err;
         }
     }
-
     async function updatePrompt() {
         if (!screensaverActive || paused || !autoPromptEnabled || isFetchingPrompt) {
             return false;
         }
         isFetchingPrompt = true;
         try {
-            const newPrompt = await fetchDynamicPromptWithRetry();
+            const newPrompt = await fetchDynamicPrompt();
             promptInput.value = newPrompt;
             settings.prompt = newPrompt;
             saveScreensaverSettings();

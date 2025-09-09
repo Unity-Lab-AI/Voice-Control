@@ -1,3 +1,21 @@
+// Global helper to retry Pollinations text API requests with exponential backoff
+window.pollinationsFetch = async function(url, options = {}, retries = 6, delay = 4000) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`Pollinations fetch failed with status ${response.status}`);
+            }
+            return response;
+        } catch (err) {
+            if (attempt === retries) throw err;
+            console.warn(`Pollinations fetch attempt ${attempt + 1} failed, retrying in ${delay/1000}s...`, err);
+            await new Promise(res => setTimeout(res, delay));
+            delay *= 2;
+        }
+    }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     window._pollinationsAPIConfig = {
         safe: false

@@ -144,7 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     const opt = document.createElement("option");
                     opt.value = m.name;
                     opt.textContent = m.description || m.name;
-
                         let tooltip = m.description || m.name;
                         if (m.censored !== undefined) {
                             tooltip += m.censored ? " (Censored)" : " (Uncensored)";
@@ -208,6 +207,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 modelSelect.value = currentSession.model;
             }
         }
+    }
+    fetchPollinationsModels();
+                const currentSession = Storage.getCurrentSession();
+                if (currentSession && currentSession.model && currentSession.model !== "unity") {
+                    const sessOpt = document.createElement("option");
+                    sessOpt.value = currentSession.model;
+                    sessOpt.textContent = `${currentSession.model} (From Session - May Be Unavailable)`;
+                    modelSelect.appendChild(sessOpt);
+                    modelSelect.value = currentSession.model;
+                }
+            });
     }
     fetchPollinationsModels();
 
