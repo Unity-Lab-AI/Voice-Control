@@ -28,8 +28,43 @@ document.addEventListener("DOMContentLoaded", () => {
     let voiceInputBtn = null;
     let slideshowInterval = null;
 
+    async function fetchWithRetry(url, options = {}, retries = 6, delay = 4000) {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+                return res;
+            } catch (err) {
+                if (attempt === retries) throw err;
+                const wait = delay * Math.pow(2, attempt);
+                console.warn(`Fetch attempt ${attempt + 1} failed. Retrying in ${wait / 1000}s...`, err);
+                await new Promise(r => setTimeout(r, wait));
+            }
+        }
+    }
+
+    async function sendUnityCommand(command, originalMessage = "") {
+        try {
+            const res = await fetchWithRetry("https://text.pollinations.ai/unity", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({ command, message: originalMessage, build: true }),
+                cache: "no-store",
+            });
+            const data = await res.json();
+            const reply = data.reply || data.response || "Command executed.";
+            window.addNewMessage({ role: "ai", content: reply });
+            if (autoSpeakEnabled) speakMessage(reply);
+        } catch (err) {
+            console.error("Unity command failed", err);
+            const errMsg = "Failed to execute Unity command.";
+            window.addNewMessage({ role: "ai", content: errMsg });
+            if (autoSpeakEnabled) speakMessage(errMsg);
+        }
+    }
+
     function processAIInstructions(text) {
-        return text.replace(/\[(CLICK|SET):([^\]]+)\]/gi, (match, action, params) => {
+        return text.replace(/\[(CLICK|SET|UNITY):([^\]]+)\]/gi, (match, action, params) => {
             const upper = action.toUpperCase();
             if (upper === "CLICK") {
                 const el = document.querySelector(params.trim());
@@ -41,6 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     el.value = value?.trim() ?? "";
                     el.dispatchEvent(new Event('change'));
                 }
+            } else if (upper === "UNITY") {
+                sendUnityCommand(params.trim(), text);
             }
             return '';
         }).trim();
@@ -593,6 +630,7 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleSpeechRecognition,
         processAIInstructions,
         handleVoiceCommand,
+        sendUnityCommand,
         findElement,
         executeCommand,
         showToast,
