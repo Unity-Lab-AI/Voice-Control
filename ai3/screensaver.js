@@ -172,8 +172,11 @@ document.addEventListener("DOMContentLoaded", () => {
             model: "unity",
             nonce: Date.now().toString() + Math.random().toString(36).substring(2)
         };
-        const tokenParam = POLLINATIONS_TOKEN ? `token=${POLLINATIONS_TOKEN}&` : "";
-        const apiUrl = `https://text.pollinations.ai/openai/${encodeURIComponent(body.model)}?${tokenParam}seed=${seed}`;
+        const params = new URLSearchParams();
+        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
+        params.set("model", body.model);
+        params.set("seed", seed);
+        const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
         try {
             const response = await fetch(apiUrl, {

@@ -690,11 +690,13 @@ document.addEventListener("DOMContentLoaded", () => {
             lastUserMsg.includes("picture") ||
             imagePatterns.some(p => p.pattern.test(lastUserMsg))
         );
-        const selectedModel = modelSelect.value || currentSession.model || "openai";
+        const selectedModel = modelSelect.value || currentSession.model || "unity";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, nonce };
-        const tokenQuery = POLLINATIONS_TOKEN ? `?token=${POLLINATIONS_TOKEN}` : "";
-        const apiUrl = `https://text.pollinations.ai/openai/${encodeURIComponent(selectedModel)}${tokenQuery}`;
+        const params = new URLSearchParams();
+        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
+        params.set("model", selectedModel);
+        const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
         console.log("Sending API request with payload:", JSON.stringify(body));
         fetch(apiUrl, {
             method: "POST",
