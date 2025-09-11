@@ -1,3 +1,12 @@
+// ============================================================================
+// Chat Core
+// ----------------------------------------------------------------------------
+// This file contains the core client-side logic for the AI chat interface. It
+// wires together UI elements, speech synthesis/recognition, interaction with
+// the Pollinations API and command execution helpers. The goal of the added
+// comments is to give a high level understanding of how pieces fit together.
+// ============================================================================
+
 // Global config for Pollinations API token
 window._pollinationsAPIConfig = window._pollinationsAPIConfig || {
     // Token can be provided via process.env or a global variable set in a separate script.
@@ -9,6 +18,16 @@ window._pollinationsAPIConfig = window._pollinationsAPIConfig || {
 
 // Global helper to retry Pollinations text API requests with exponential backoff.
 // Automatically appends `token` query parameter if not present.
+/**
+ * Wrapper around `fetch` that automatically adds the Pollinations token and
+ * retries failed requests using exponential backoff.
+ *
+ * @param {string} url - Endpoint to call.
+ * @param {RequestInit} [options={}] - Fetch options.
+ * @param {number} [retries=6] - How many times to retry on failure.
+ * @param {number} [delay=4000] - Initial delay in milliseconds between retries.
+ * @returns {Promise<Response>} Resolves with the successful `Response` object.
+ */
 window.pollinationsFetch = async function (url, options = {}, retries = 6, delay = 4000) {
     const cfg = window._pollinationsAPIConfig || {};
     try {
@@ -78,6 +97,15 @@ document.addEventListener("DOMContentLoaded", () => {
     let voiceInputBtn = null;
     let slideshowInterval = null;
 
+    /**
+     * Sends a command to a Unity instance through the Pollinations API.
+     * Any textual response from the server is appended to the chat and
+     * optionally spoken aloud.
+     *
+     * @param {string} command - Command to forward to Unity.
+     * @param {string} [originalMessage=""] - Full user message that triggered
+     *   the command. Provided for context on the server.
+     */
     async function sendUnityCommand(command, originalMessage = "") {
         try {
             const res = await window.pollinationsFetch("https://text.pollinations.ai/unity", {
@@ -98,6 +126,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Parses instruction tags embedded in AI responses and performs simple
+     * DOM manipulations such as clicking elements or setting input values.
+     *
+     * @param {string} text - Raw AI response which may contain instruction tags
+     *   like `[CLICK:.selector]` or `[SET:input=value]`.
+     * @returns {string} The response with instruction tags removed.
+     */
     function processAIInstructions(text) {
         return text.replace(/\[(CLICK|SET|UNITY):([^\]]+)\]/gi, (match, action, params) => {
             const upper = action.toUpperCase();
@@ -118,10 +154,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }).trim();
     }
 
+    /**
+     * Normalizes a string for easier comparisons by lowercasing and trimming.
+     *
+     * @param {string} str - Text to normalize.
+     * @returns {string} Normalized string or empty string if falsy.
+     */
     function normalize(str) {
         return str?.toLowerCase().trim() || "";
     }
 
+    /**
+     * Adds `data-voice` attributes to common interactive elements so that
+     * they can be targeted by spoken commands.
+     *
+     * @param {Document|HTMLElement} [root=document] - Root element to scan.
+     */
     function autoTagVoiceTargets(root = document) {
         const selectors = 'button, [role="button"], a, input, select, textarea';
         const elements = root.querySelectorAll(selectors);
@@ -155,6 +203,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     voiceTagObserver.observe(document.body, { childList: true, subtree: true });
 
+    /**
+     * Attempts to resolve a spoken phrase to a DOM element. The search covers
+     * ids, `data-voice` attributes and a fuzzy match against aria-label, title
+     * or text content.
+     *
+     * @param {string} phrase - Human readable description of the element.
+     * @returns {HTMLElement|null} Matching element or `null` if not found.
+     */
     function findElement(phrase) {
         const norm = normalize(phrase);
         const id = norm.replace(/\s+/g, "-");
@@ -185,6 +241,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return null;
     }
 
+    /**
+     * Parses a spoken sentence and triggers matching UI actions such as
+     * changing themes, clicking buttons or setting element values.
+     *
+     * @param {string} message - Raw voice command from the user.
+     * @returns {boolean} `true` if a command was executed, otherwise `false`.
+     */
     function executeCommand(message) {
         const lower = message.toLowerCase().trim();
 
@@ -306,10 +369,24 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
     }
 
+    /**
+     * Entry point for voice recognition results. Currently it simply forwards
+     * the text to {@link executeCommand} but can be expanded for more complex
+     * handling in the future.
+     *
+     * @param {string} text - Recognized speech.
+     * @returns {boolean} Whether a command was executed.
+     */
     function handleVoiceCommand(text) {
         return executeCommand(text);
     }
 
+    /**
+     * Stores a reference to the button controlling voice input so it can be
+     * updated by other modules.
+     *
+     * @param {HTMLElement} btn - Voice input toggle button element.
+     */
     function setVoiceInputButton(btn) {
         voiceInputBtn = btn;
         if (window._chatInternals) {
@@ -317,6 +394,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Loads available speech synthesis voices and resolves once they are
+     * ready. Some browsers populate the list asynchronously so this includes
+     * a fallback timeout.
+     *
+     * @returns {Promise<SpeechSynthesisVoice>} Promise resolving with the
+     *   selected voice.
+     */
     function loadVoices() {
         return new Promise((resolve) => {
             voices = synth.getVoices();
@@ -339,13 +424,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    /**
+     * Restores the previously chosen voice or selects a default, then stores
+     * the selection to localStorage.
+     *
+     * @param {Function} resolve - Resolver for the promise returned by
+     *   {@link loadVoices}.
+     */
     function setVoiceOptions(resolve) {
         const savedVoiceIndex = localStorage.getItem("selectedVoiceIndex");
         if (savedVoiceIndex && voices[savedVoiceIndex]) {
             selectedVoice = voices[savedVoiceIndex];
         } else {
-            selectedVoice = voices.find((v) => v.name === "Google UK English Female") || 
-                            voices.find((v) => v.lang === "en-GB" && v.name.toLowerCase().includes("female")) || 
+            selectedVoice = voices.find((v) => v.name === "Google UK English Female") ||
+                            voices.find((v) => v.lang === "en-GB" && v.name.toLowerCase().includes("female")) ||
                             voices[0];
             const selectedIndex = voices.indexOf(selectedVoice);
             if (selectedIndex >= 0) {
@@ -356,6 +448,13 @@ document.addEventListener("DOMContentLoaded", () => {
         resolve(selectedVoice);
     }
 
+    /**
+     * Retrieves all select elements used for choosing a TTS voice across the
+     * application.
+     *
+     * @returns {HTMLElement[]} Array of dropdown elements (some may be null
+     *   if not present on the current page).
+     */
     function getVoiceDropdowns() {
         const voiceSelect = document.getElementById("voice-select");
         const voiceSelectModal = document.getElementById("voice-select-modal");
@@ -364,6 +463,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return [voiceSelect, voiceSelectModal, voiceSelectSettings, voiceSelectVoiceChat];
     }
 
+    /**
+     * Populates each voice selection dropdown with the list of available
+     * voices and keeps them synchronized with one another.
+     */
     function populateAllVoiceDropdowns() {
         const dropdowns = getVoiceDropdowns();
 
@@ -392,6 +495,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    /**
+     * Updates the selected option of all voice dropdowns to keep them in sync.
+     *
+     * @param {string|number} selectedIndex - Index of the chosen voice.
+     */
     function updateAllVoiceDropdowns(selectedIndex) {
         const dropdowns = getVoiceDropdowns();
 
@@ -406,6 +514,10 @@ document.addEventListener("DOMContentLoaded", () => {
         updateVoiceToggleUI();
     });
 
+    /**
+     * Enables or disables automatic TTS playback for AI responses and updates
+     * localStorage/UI accordingly.
+     */
     function toggleAutoSpeak() {
         autoSpeakEnabled = !autoSpeakEnabled;
         localStorage.setItem("autoSpeakEnabled", autoSpeakEnabled.toString());
@@ -418,6 +530,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Updates the visual state of the voice toggle button to reflect whether
+     * auto-speak is active.
+     */
     function updateVoiceToggleUI() {
         if (voiceToggleBtn) {
             voiceToggleBtn.textContent = autoSpeakEnabled ? "🔊 Voice On" : "🔇 Voice Off";
@@ -425,6 +541,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Speaks text using the Web Speech API. Strips out code blocks and URLs to
+     * produce cleaner audio.
+     *
+     * @param {string} text - Text to vocalize.
+     * @param {Function|null} [onEnd=null] - Optional callback invoked once
+     *   speech has finished.
+     */
     function speakMessage(text, onEnd = null) {
         if (!synth || !window.SpeechSynthesisUtterance) {
             showToast("Speech synthesis not supported in your browser");
@@ -493,6 +617,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 10000);
     }
 
+    /**
+     * Immediately stops any ongoing speech synthesis.
+     */
     function stopSpeaking() {
         if (synth && (isSpeaking || synth.speaking)) {
             synth.cancel();
@@ -502,6 +629,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Helper exposed for UI buttons to cancel TTS and show a toast message.
+     */
     function shutUpTTS() {
         if (synth) {
             synth.cancel();
@@ -511,7 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("TTS stopped");
         }
     }
-
+    // Patterns used to detect common phrasings of image generation requests.
     const imagePatterns = [
         { pattern: /generate\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
         { pattern: /create\s(an?\s)?image\s(of|for)\s(.+)/i, group: 3 },
@@ -524,11 +654,24 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
     window.imagePatterns = imagePatterns;
 
+    /**
+     * Generates a pseudo-random seed used when requesting images so that
+     * repeated prompts don't always return the same result.
+     *
+     * @returns {string} Seed string.
+     */
     function randomSeed() {
         return Math.floor(Math.random() * 1000000).toString();
     }
     window.randomSeed = randomSeed;
 
+    /**
+     * Extracts memory blocks from a response. Memory blocks are of the form
+     * `[memory]...[/memory]` and are stored separately from the chat log.
+     *
+     * @param {string} text - Text potentially containing memory tags.
+     * @returns {string[]} Array of memory strings.
+     */
     function parseMemoryBlocks(text) {
         const memRegex = /\[memory\]([\s\S]*?)\[\/memory\]/gi;
         const found = [];
@@ -539,10 +682,24 @@ document.addEventListener("DOMContentLoaded", () => {
         return found;
     }
 
+    /**
+     * Removes `[memory]` blocks from text so that only the visible content is
+     * displayed to the user.
+     *
+     * @param {string} text - Raw AI response.
+     * @returns {string} Response with memory blocks stripped out.
+     */
     function removeMemoryBlocks(text) {
         return text.replace(/\[memory\][\s\S]*?\[\/memory\]/gi, "");
     }
 
+    /**
+     * Normalizes various response formats returned by the Pollinations API
+     * into a plain string.
+     *
+     * @param {any} response - Raw response from the API.
+     * @returns {string} Extracted text content.
+     */
     function extractAIContent(response) {
         if (response.choices?.[0]?.message?.content) return response.choices[0].message.content;
         if (response.choices?.[0]?.text) return response.choices[0].text;
@@ -551,6 +708,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return "Sorry, I couldn't process that response.";
     }
 
+    /**
+     * Recursively speaks an array of sentences one after another. Helpful when
+     * the AI response is split into several sentences that should be spoken
+     * sequentially.
+     *
+     * @param {string[]} sentences - Array of sentences to speak.
+     * @param {number} [index=0] - Current sentence index.
+     */
     function speakSentences(sentences, index = 0) {
         if (index >= sentences.length) {
             return;
@@ -558,6 +723,16 @@ document.addEventListener("DOMContentLoaded", () => {
         speakMessage(sentences[index], () => speakSentences(sentences, index + 1));
     }
 
+    /**
+     * Sends the conversation context to the Pollinations API and handles the
+     * response. Depending on the user's request it may extract code blocks or
+     * image prompts and also updates memory storage.
+     *
+     * @param {Function|null} [callback=null] - Optional callback executed after
+     *   the response is processed.
+     * @param {string|null} [overrideContent=null] - If provided, replaces the
+     *   last user message when sending to the API.
+     */
     window.sendToPollinations = (callback = null, overrideContent = null) => {
         const currentSession = Storage.getCurrentSession();
         const loadingDiv = document.createElement("div");
@@ -680,6 +855,12 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     };
 
+    /**
+     * Initializes the browser's speech recognition engine and wires up event
+     * handlers to capture spoken input.
+     *
+     * @returns {boolean} `true` if initialization succeeded, otherwise `false`.
+     */
     function initSpeechRecognition() {
         if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
             showToast("Speech recognition not supported in this browser");
@@ -761,6 +942,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Toggles speech recognition on and off, requesting microphone access if
+     * necessary.
+     */
     function toggleSpeechRecognition() {
         if (!recognition && !initSpeechRecognition()) {
             showToast("Speech recognition not supported in this browser. Please use Chrome, Edge, or Firefox.");
@@ -780,6 +965,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /**
+     * Displays a transient toast notification centered at the top of the page.
+     *
+     * @param {string} message - Message to display.
+     * @param {number} [duration=3000] - Time in ms before the toast fades out.
+     */
     function showToast(message, duration = 3000) {
         let toast = document.getElementById("toast-notification");
         if (!toast) {
