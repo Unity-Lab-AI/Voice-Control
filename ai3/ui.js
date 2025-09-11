@@ -35,6 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearUserDataBtn = document.getElementById("clear-user-data-btn");
     const toggleSimpleModeBtn = document.getElementById("toggle-simple-mode");
 
+    const POLLINATIONS_TOKEN =
+        (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        window.POLLINATIONS_TOKEN ||
+        "";
+
     // Create or reuse the <link> element responsible for injecting theme CSS
     // files. Themes are swapped by simply changing its href attribute.
     let themeLinkElement = document.getElementById("theme-link");
@@ -125,7 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // or returns invalid data.
     async function fetchPollinationsModels() {
         try {
-            const res = await window.pollinationsFetch("https://text.pollinations.ai/models", {
+            const url = `https://text.pollinations.ai/models?token=${POLLINATIONS_TOKEN}`;
+            const res = await fetch(url, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 cache: "no-store"

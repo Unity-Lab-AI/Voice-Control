@@ -19,6 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const transitionDurationInput = document.getElementById("screensaver-transition-duration");
     const restartPromptButton = document.getElementById("screensaver-restart-prompt");
 
+    const POLLINATIONS_TOKEN =
+        (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+        window.POLLINATIONS_TOKEN ||
+        "";
+
     // --- Screensaver runtime state --- //
     let screensaverActive = false;
     let imageInterval = null;
@@ -155,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Ask the backend for a fresh creative prompt, retrying on failure to
     // improve resilience when the service is flaky.
-    async function fetchDynamicPromptWithRetry(maxRetries = 6, delayMs = 4000) {
+    async function fetchDynamicPromptWithRetry() {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
         const messages = [
             { role: "system", content: "Generate unique, wild image prompts as text only, under 100 characters." },
@@ -167,15 +172,15 @@ document.addEventListener("DOMContentLoaded", () => {
             model: "unity",
             nonce: Date.now().toString() + Math.random().toString(36).substring(2)
         };
-        const apiUrl = `https://text.pollinations.ai/openai?seed=${seed}`;
+        const apiUrl = `https://text.pollinations.ai/openai/${encodeURIComponent(body.model)}?token=${POLLINATIONS_TOKEN}&seed=${seed}`;
         console.log("Sending API request for new prompt:", JSON.stringify(body));
         try {
-            const response = await window.pollinationsFetch(apiUrl, {
+            const response = await fetch(apiUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Accept: "application/json" },
                 body: JSON.stringify(body),
                 cache: "no-store",
-            }, maxRetries, delayMs);
+            });
 
             const data = await response.json();
             let generatedPrompt = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.response;
