@@ -1,3 +1,4 @@
+// Kick everything off once the DOM has been fully parsed.
 document.addEventListener("DOMContentLoaded", () => {
     const screensaverContainer = document.getElementById("screensaver-container");
     const toggleScreensaverButton = document.getElementById("toggle-screensaver");
@@ -18,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const transitionDurationInput = document.getElementById("screensaver-transition-duration");
     const restartPromptButton = document.getElementById("screensaver-restart-prompt");
 
+    // --- Screensaver runtime state --- //
     let screensaverActive = false;
     let imageInterval = null;
     let promptInterval = null;
@@ -34,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const MAX_HISTORY = 12;
     const PROMPT_UPDATE_INTERVAL = 20000;
 
+    // Default settings that can be persisted between sessions.
     let settings = {
         prompt: '',
         timer: 30,
@@ -60,6 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
     transitionDurationInput.title = "Set the duration of image transitions in seconds.";
     if (restartPromptButton) restartPromptButton.title = "Toggle automatic prompt generation on/off.";
 
+    // Persist current settings to localStorage so the screensaver remembers the
+    // user's preferences between runs.
     function saveScreensaverSettings() {
         try {
             localStorage.setItem("screensaverSettings", JSON.stringify(settings));
@@ -69,6 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Read any previously saved configuration from localStorage and hydrate the
+    // form controls with those values.
     function loadScreensaverSettings() {
         const raw = localStorage.getItem("screensaverSettings");
         if (raw) {
@@ -95,6 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Store the generated image URLs and their prompts so they can be restored
+    // if the user leaves and returns.
     function saveImageHistory() {
         try {
             localStorage.setItem("imageHistory", JSON.stringify(imageHistory));
@@ -107,6 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Currently the history is cleared on startup to avoid stale images, but
+    // the function also refreshes the thumbnail view.
     function loadImageHistory() {
         imageHistory = [];
         promptHistory = [];
@@ -117,10 +128,12 @@ document.addEventListener("DOMContentLoaded", () => {
     loadScreensaverSettings();
     loadImageHistory();
 
+    // Create a pseudo-random seed value used for prompt and image generation.
     function generateSeed() {
         return Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
     }
 
+    // Return pixel dimensions based on the requested aspect ratio.
     function getDimensions(aspect) {
         switch (aspect) {
             case "widescreen": return { width: 1920, height: 1080 };
@@ -130,6 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Preload an image and resolve once the browser has cached it.
     function preloadImage(url) {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -139,6 +153,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Ask the backend for a fresh creative prompt, retrying on failure to
+    // improve resilience when the service is flaky.
     async function fetchDynamicPromptWithRetry(maxRetries = 6, delayMs = 4000) {
         const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
         const messages = [
@@ -172,6 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
             throw err;
         }
     }
+    // Replace the current prompt with a newly fetched one when allowed.
     async function updatePrompt() {
         if (!screensaverActive || paused || !autoPromptEnabled || isFetchingPrompt) {
             return false;
@@ -195,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Generate a new image based on the current prompt and swap it onto the screen.
     async function fetchNewImage() {
         if (isTransitioning) return;
         isTransitioning = true;
@@ -261,6 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Insert a newly generated image and its prompt into the history arrays
+    // while enforcing the maximum history size.
     function addToHistory(imageUrl, prompt) {
         if (imageHistory.includes(imageUrl)) {
             console.log("Duplicate image URL detected, skipping:", imageUrl);
@@ -278,6 +298,8 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Current promptHistory length:", promptHistory.length, "Prompts:", promptHistory);
     }
 
+    // Rebuild the thumbnail strip so the user can revisit previously generated
+    // images. Any failures fall back to a placeholder.
     function updateThumbnailHistory() {
         const thumbnailContainer = document.getElementById('screensaver-thumbnails');
         if (!thumbnailContainer) {
@@ -322,6 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Forced DOM reflow to ensure rendering. Container offsetWidth:", offsetWidth);
     }
 
+    // Swap the main image with one from history when a thumbnail is clicked.
     function showHistoricalImage(index) {
         const imageUrl = imageHistory[index];
         const currentImgElement = document.getElementById(`screensaver-${currentImage}`);
@@ -349,6 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Start or reset the timer responsible for fetching new images.
     function setOrResetImageInterval() {
         clearInterval(imageInterval);
         imageInterval = setInterval(() => {
@@ -359,6 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, settings.timer * 1000);
     }
 
+    // Manage the interval that periodically fetches new prompts.
     function setOrResetPromptInterval() {
         clearInterval(promptInterval);
         promptInterval = null;
@@ -385,6 +410,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Enable or disable automatic prompt generation. When turning off, the user
+    // can enter their own prompt manually.
     function toggleAutoPrompt() {
         autoPromptEnabled = !autoPromptEnabled;
         restartPromptButton.innerHTML = autoPromptEnabled ? "🔄 Auto-Prompt On" : "🔄 Auto-Prompt Off";
@@ -400,6 +427,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Configure the DOM and kick off image/prompt intervals to start the
+    // screensaver experience.
     function startScreensaver() {
         screensaverActive = true;
         paused = false;
@@ -433,6 +462,8 @@ document.addEventListener("DOMContentLoaded", () => {
         window.screensaverActive = true;
     }
 
+    // Tear down any running intervals and restore the page when the screensaver
+    // is stopped.
     function stopScreensaver() {
         screensaverActive = false;
         paused = false;
@@ -464,6 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Temporarily pause or resume the automatic image/prompt rotation.
     function togglePause() {
         paused = !paused;
         playPauseButton.innerHTML = paused ? "▶️" : "⏸️";
@@ -474,6 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Hide or show the control panel and thumbnail strip.
     function toggleControls() {
         controlsHidden = !controlsHidden;
         const controls = document.querySelector('.screensaver-controls');
@@ -490,6 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.showToast(controlsHidden ? "Controls hidden" : "Controls visible");
     }
 
+    // Download the currently displayed image via a temporary anchor element.
     function saveImage() {
         if (!document.getElementById(`screensaver-${currentImage}`).src) {
             window.showToast("No image to save");
@@ -517,6 +551,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
+    // Copy the current image to the clipboard using the Canvas API.
     function copyImage() {
         const currentImg = document.getElementById(`screensaver-${currentImage}`);
         if (!currentImg.src) {
@@ -555,6 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }, "image/png");
     }
 
+    // Enter or exit fullscreen mode while keeping track of state.
     function toggleFullscreen() {
         if (!screensaverActive) {
             window.showToast("Start the screensaver first!");
@@ -685,6 +721,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Lightweight toast notification helper used throughout the screensaver.
     window.showToast = function(message, duration = 3000) {
         let toast = document.getElementById("toast-notification");
         if (!toast) {
