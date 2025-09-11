@@ -39,20 +39,37 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteAllUserData,
     renderSessions
   };
-
+  /**
+   * Return the current array of chat sessions held in memory.
+   * @returns {Array<Object>} all stored sessions
+   */
   function getSessions() {
     return sessions;
   }
 
+  /**
+   * Get the default model to use for new sessions. If the user has not
+   * chosen one yet, "unity" is returned.
+   * @returns {string} model identifier
+   */
   function getDefaultModel() {
     return localStorage.getItem("defaultModelPreference") || "unity";
   }
 
+  /**
+   * Persist the user's preferred default model so future sessions inherit it.
+   * @param {string} modelName - model identifier
+   */
   function setDefaultModel(modelName) {
     localStorage.setItem("defaultModelPreference", modelName);
     console.log("Default model preference set to:", modelName);
   }
 
+  /**
+   * Create a new chat session and store it immediately.
+   * @param {string} name - human friendly session title
+   * @returns {Object} the created session
+   */
   function createSession(name) {
     const newId = Date.now().toString();
     const session = {
@@ -67,6 +84,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return session;
   }
 
+  /**
+   * Delete a session. If the deleted session was active, choose another
+   * session or create a new one as the current session.
+   * @param {string} sessionId - identifier of session to delete
+   */
   function deleteSession(sessionId) {
     sessions = sessions.filter(s => s.id !== sessionId);
     saveSessions();
@@ -83,6 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSessions();
   }
 
+  /**
+   * Update the display name for a session. Handles JSON strings that may
+   * come from the backend containing a suggested title.
+   * @param {string} sessionId - id of session to rename
+   * @param {string|Object} newName - new name or object with title
+   */
   function renameSession(sessionId, newName) {
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
@@ -104,6 +132,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Retrieve the session currently marked as active. If none exists,
+   * create a new session and mark it active.
+   * @returns {Object} current session object
+   */
   function getCurrentSession() {
     const currentId = localStorage.getItem("currentSessionId");
     let session = sessions.find(s => s.id === currentId);
@@ -114,11 +147,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return session;
   }
 
+  /**
+   * Set which session should be active and update the sidebar list.
+   * @param {string} sessionId - id of session to activate
+   */
   function setCurrentSessionId(sessionId) {
     localStorage.setItem("currentSessionId", sessionId);
     renderSessions();
   }
 
+  /**
+   * Change the model associated with a specific session and persist both
+   * the session and the default model preference.
+   * @param {string} sessionId - session to update
+   * @param {string} modelName - model identifier to assign
+   */
   function setSessionModel(sessionId, modelName) {
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
@@ -129,6 +172,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Replace the message history for a session, typically after sending or
+   * receiving new messages from the API.
+   * @param {string} sessionId - session whose messages are being saved
+   * @param {Array<Object>} messages - full message array
+   */
   function updateSessionMessages(sessionId, messages) {
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
@@ -138,15 +187,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Load the list of sessions from localStorage.
+   * @returns {Array<Object>} parsed session data or an empty array
+   */
   function loadSessions() {
     const raw = localStorage.getItem("pollinations_sessions");
     return raw ? JSON.parse(raw) : [];
   }
 
+  /**
+   * Persist the current in‑memory sessions array to localStorage.
+   */
   function saveSessions() {
     localStorage.setItem("pollinations_sessions", JSON.stringify(sessions));
   }
 
+  /**
+   * Rebuild the session list in the sidebar. The most recently updated
+   * sessions appear first and the active session receives a special class.
+   */
   function renderSessions() {
     if (!sessionListEl) return;
     sessionListEl.innerHTML = "";
@@ -217,6 +277,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Remove every stored session and start fresh with a new one.
+   */
   function clearAllSessions() {
     sessions = [];
     saveSessions();
@@ -226,15 +289,27 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSessions();
   }
 
+  /**
+   * Retrieve the saved memory strings from localStorage.
+   * @returns {Array<string>} list of memories
+   */
   function getMemories() {
     const raw = localStorage.getItem("pollinations_memory");
     return raw ? JSON.parse(raw) : [];
   }
 
+  /**
+   * Persist a provided memory array to localStorage.
+   * @param {Array<string>} memories - full list to store
+   */
   function saveMemories(memories) {
     localStorage.setItem("pollinations_memory", JSON.stringify(memories));
   }
 
+  /**
+   * Add a memory entry if it is not already stored.
+   * @param {string} text - memory string to store
+   */
   function addMemory(text) {
     const memories = getMemories();
     if (!memories.includes(text.trim())) {
@@ -243,6 +318,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Remove a memory entry by its index.
+   * @param {number} index - position of memory to remove
+   */
   function removeMemory(index) {
     const memories = getMemories();
     if (index >= 0 && index < memories.length) {
@@ -251,10 +330,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Delete all stored memories.
+   */
   function clearAllMemories() {
     localStorage.removeItem("pollinations_memory");
   }
 
+  /**
+   * Completely remove all data saved by the application and refresh.
+   */
   function deleteAllUserData() {
     localStorage.clear();
     location.reload();
@@ -262,6 +347,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ───── user‑ID registration (now via /api/registerUser) ───── */
 
+  /**
+   * Ensure a persistent user ID exists. If none is stored, attempt to
+   * register one with the backend and fall back to a locally generated ID
+   * when necessary.
+   */
   function initUserChecks() {
     let firstLaunch = localStorage.getItem("firstLaunch");
     if (firstLaunch === null) {
@@ -275,6 +365,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /**
+   * Create a local user ID if none exists and server registration fails.
+   */
   function ensureLocalUserId() {
     if (!localStorage.getItem("uniqueUserId")) {
       const localId = generateRandomId();
@@ -283,6 +376,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Retrieve or generate a unique user identifier and optionally register
+   * it with the remote server.
+   * @returns {Promise<string>} resolved user ID
+   */
   async function checkOrGenerateUserId() {
     let userId = localStorage.getItem("uniqueUserId");
     if (!userId) {
@@ -303,6 +401,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return userId;
   }
 
+  /**
+   * Attempt to register a generated user ID with the server. Returns true
+   * if the registration succeeds or the ID already exists.
+   * @param {string} userId - identifier to register
+   * @returns {Promise<boolean>} success state
+   */
   async function registerUserIdWithServer(userId) {
     if (USE_LOCAL_FALLBACK) {
       console.log("Using local fallback for user registration");
@@ -326,12 +430,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Generate a short random identifier using base‑36 characters.
+   * @returns {string} random ID
+   */
   function generateRandomId() {
     return Math.random().toString(36).substr(2, 9);
   }
 
   /* ───── Cloudflare visitor‑counter ───── */
 
+  /**
+   * Periodically update the visitor count display by polling the backend.
+   */
   function startVisitorCountPolling() {
     const visitorCountDisplay = document.getElementById("visitor-count-display");
     if (!visitorCountDisplay) return;
@@ -350,6 +461,10 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(update, 60_000); // refresh every minute
   }
 
+  /**
+   * Fetch the visitor count, caching the value to avoid excessive requests.
+   * @returns {Promise<number>} total visitor count
+   */
   async function fetchVisitorCountCached() {
     const now = Date.now();
     const ts  = +localStorage.getItem(VISITOR_TS_KEY) || 0;
@@ -370,6 +485,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return total;
   }
 
+  /**
+   * Convert a large number into a shortened, human‑friendly string.
+   * @param {number} n - number to prettify
+   * @returns {string} formatted number
+   */
   function prettyNumber(n) {
     const abs = Math.abs(n);
     if (abs >= 1e9)  return (n / 1e9).toFixed(abs >= 1e11 ? 0 : 2) + "B";
