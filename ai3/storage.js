@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const sessionListEl = document.getElementById("session-list");
   let sessions = loadSessions();
-  const defaultModelPreference = localStorage.getItem("defaultModelPreference") || "openai";
+  const defaultModelPreference = localStorage.getItem("defaultModelPreference") || "unity";
 
   if (!localStorage.getItem("currentSessionId")) {
     const newSession = createSession("New Chat");
@@ -49,11 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * Get the default model to use for new sessions. If the user has not
-   * chosen one yet, "openai" is returned.
+   * chosen one yet, "unity" is returned.
    * @returns {string} model identifier
    */
   function getDefaultModel() {
-    return localStorage.getItem("defaultModelPreference") || "openai";
+    return localStorage.getItem("defaultModelPreference") || "unity";
   }
 
   /**
