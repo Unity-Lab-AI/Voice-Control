@@ -1,4 +1,8 @@
+// Main UI logic for the web client. This script wires up all DOM elements,
+// persists user preferences, and connects interface actions to the underlying
+// storage and chat logic.
 document.addEventListener("DOMContentLoaded", () => {
+    // Cache references to frequently accessed DOM nodes used throughout the UI.
     const newSessionBtn = document.getElementById("new-session-btn");
     const modelSelect = document.getElementById("model-select");
     const donationOpenBtn = document.getElementById("donation-open-btn");
@@ -31,6 +35,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearUserDataBtn = document.getElementById("clear-user-data-btn");
     const toggleSimpleModeBtn = document.getElementById("toggle-simple-mode");
 
+    // Create or reuse the <link> element responsible for injecting theme CSS
+    // files. Themes are swapped by simply changing its href attribute.
     let themeLinkElement = document.getElementById("theme-link");
     if (!themeLinkElement) {
         themeLinkElement = document.createElement("link");
@@ -39,6 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.head.appendChild(themeLinkElement);
     }
 
+    // List of available visual themes the user can choose from. Each object
+    // maps an internal value to a display label and the CSS file implementing
+    // the theme.
     const allThemes = [
         { value: "light", label: "Light", file: "themes/light.css" },
         { value: "dark", label: "Dark", file: "themes/dark.css" },
@@ -65,6 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { value: "serenity", label: "Serenity", file: "themes/serenity.css" }
     ];
 
+    // Populate both theme dropdown menus with the available theme options.
     function populateThemeDropdowns() {
         themeSelect.innerHTML = "";
         themeSelectSettings.innerHTML = "";
@@ -84,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     populateThemeDropdowns();
 
+    // Load the last chosen theme from localStorage and apply it to the page.
     function loadUserTheme() {
         const savedTheme = localStorage.getItem("selectedTheme") || "dark";
         themeSelect.value = savedTheme;
@@ -93,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     loadUserTheme();
 
+    // Save a new theme choice and update the CSS link accordingly.
     function changeTheme(newThemeValue) {
         localStorage.setItem("selectedTheme", newThemeValue);
         themeSelect.value = newThemeValue;
@@ -108,6 +120,9 @@ document.addEventListener("DOMContentLoaded", () => {
         changeTheme(themeSelectSettings.value);
     });
 
+    // Retrieve the list of available language models from the Pollinations API
+    // and populate the model dropdown. Includes fallbacks when the API fails
+    // or returns invalid data.
     async function fetchPollinationsModels() {
         try {
             const res = await window.pollinationsFetch("https://text.pollinations.ai/models", {
@@ -124,6 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 throw new Error("Invalid models response");
             }
 
+            // Build an <option> for each model provided by the service.
             models.forEach(m => {
                 if (m && m.name) {
                     const opt = document.createElement("option");
@@ -147,6 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
+            // If no valid models were returned, provide a sane fallback.
             if (!hasValidModel) {
                 const fallbackOpt = document.createElement("option");
                 fallbackOpt.value = "unity";
@@ -155,6 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 modelSelect.value = "unity";
             }
 
+            // Preserve the model from the current session if possible.
             const currentSession = Storage.getCurrentSession();
             if (currentSession && currentSession.model) {
                 const modelExists = Array.from(modelSelect.options).some(option => option.value === currentSession.model);
@@ -194,7 +212,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
+    // Kick off the initial model fetch when the UI loads.
     fetchPollinationsModels();
+
+    // Create a new chat session and reset the chat interface.
     newSessionBtn.addEventListener("click", () => {
         const newSess = Storage.createSession("New Chat");
         Storage.setCurrentSessionId(newSess.id);
@@ -205,6 +226,8 @@ document.addEventListener("DOMContentLoaded", () => {
         window.showToast("New chat session created");
     });
 
+    // When the user selects a different model, save the change and briefly
+    // highlight the selector to acknowledge the update.
     modelSelect.addEventListener("change", () => {
         const currentSession = Storage.getCurrentSession();
         if (currentSession) {
@@ -221,6 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Simple handlers for opening and closing the donation modal.
     donationOpenBtn.addEventListener("click", () => {
         donationModal.classList.remove("hidden");
     });
@@ -228,6 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
         donationModal.classList.add("hidden");
     });
 
+    // Settings modal allows the user to tweak preferences such as voices.
     openSettingsBtn.addEventListener("click", () => {
         settingsModal.classList.remove("hidden");
         if (window._chatInternals && window._chatInternals.voices && window._chatInternals.voices.length > 0) {
@@ -238,6 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
         settingsModal.classList.add("hidden");
     });
 
+    // Personalization modal allows storing custom user details.
     if (openPersonalizationBtn) {
         openPersonalizationBtn.addEventListener("click", () => {
             openPersonalizationModal();
@@ -281,12 +307,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Display the personalization modal and populate fields from localStorage.
     function openPersonalizationModal() {
         if (!personalizationModal) return;
         loadPersonalization();
         personalizationModal.classList.remove("hidden");
     }
 
+    // Load previously saved personalization details into the modal inputs.
     function loadPersonalization() {
         const savedData = localStorage.getItem('userPersonalization');
         if (savedData) {
@@ -310,6 +338,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Persist personalization info as a memory entry so it can influence
+    // future conversations.
     function addOrUpdatePersonalizationMemory(memoryText) {
         const memories = Memory.getMemories();
         const personalizationIndex = memories.findIndex(m => m.startsWith("User Personalization:"));
@@ -319,6 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
         Memory.addMemoryEntry(memoryText);
     }
 
+    // Memory manager UI -----------------------------------------------------
     openMemoryManagerBtn.addEventListener("click", () => {
         memoryModal.classList.remove("hidden");
         loadMemoryEntries();
@@ -337,6 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelNewMemoryBtn.addEventListener("click", () => {
         addMemoryModal.classList.add("hidden");
     });
+    // Validate and store a new memory entry typed by the user.
     saveNewMemoryBtn.addEventListener("click", () => {
         const text = newMemoryText.value.trim();
         if (!text) {
@@ -353,6 +385,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Render all stored memory items in the modal list and provide editing
+    // capabilities when each list item is clicked.
     function loadMemoryEntries() {
         memoryList.innerHTML = "";
         const memories = Memory.getMemories();
@@ -390,6 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Allow the user to clear every memory entry in one go.
     clearAllMemoryBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to clear all memory entries?")) {
             const result = Memory.clearAllMemories();
@@ -402,6 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Buttons for clearing chat sessions and wiping all stored user data.
     if (clearChatSessionsBtn) {
         clearChatSessionsBtn.addEventListener("click", () => {
             if (confirm("Are you sure you want to clear ALL chat sessions? This cannot be undone.")) {
@@ -420,6 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Quick access to the simple mode interface if the script is available.
     if (toggleSimpleModeBtn) {
         toggleSimpleModeBtn.addEventListener("click", () => {
             if (typeof window.openSimpleMode === "function") {
