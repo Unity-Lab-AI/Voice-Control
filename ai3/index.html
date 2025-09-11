@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- ===== META & STYLES ===== -->
     <meta charset="UTF-8">
     <title>Unity Chat UI 0.14.7</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
+    <!-- ===== SCREENSAVER OVERLAY ===== -->
     <div id="screensaver-container" class="screensaver hidden">
       <img id="screensaver-image1" alt="Screensaver Image" style="opacity: 0;">
       <img id="screensaver-image2" alt="Screensaver Image" style="opacity: 0;">
@@ -58,7 +60,9 @@
         </div>
       </div>
     </div>
+    <!-- ===== APP LAYOUT ===== -->
     <div class="app-container">
+      <!-- ---- SIDEBAR ---- -->
       <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <h2>Sessions</h2>
@@ -102,6 +106,7 @@
           <i class="fas fa-mug-hot"></i> Buy Me a Coffee
         </button>
       </div>
+      <!-- ---- CHAT AREA ---- -->
       <div class="chat-layout">
         <div class="chat-main">
           <div id="chat-box" class="chat-box"></div>
@@ -137,6 +142,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== DONATION MODAL ===== -->
     <div id="donation-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -162,6 +168,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== SETTINGS MODAL ===== -->
     <div id="settings-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -203,6 +210,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== MEMORY MODAL ===== -->
     <div id="memory-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -226,6 +234,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== ADD MEMORY MODAL ===== -->
     <div id="add-memory-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -250,6 +259,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== PERSONALIZATION MODAL ===== -->
     <div id="personalization-modal" class="modal-backdrop hidden">
       <div class="modal-container personalization-modal">
         <div class="modal-header">
@@ -292,6 +302,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== FIRST-LAUNCH MODAL ===== -->
     <div id="first-launch-modal" class="modal-backdrop hidden">
       <div class="modal-container first-launch-modal">
         <div class="modal-header">
@@ -332,6 +343,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== VOICE SETTINGS MODAL ===== -->
     <div id="voice-settings-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -370,6 +382,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== VOICE CHAT MODAL ===== -->
     <div id="voice-chat-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -382,6 +395,7 @@
         </div>
       </div>
     </div>
+    <!-- ===== SCRIPTS ===== -->
     <script>
       function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
@@ -422,5 +436,5 @@
     <script defer src="chat-core.js"></script>
     <script defer src="chat-storage.js"></script>
     <script defer src="chat-init.js"></script>
-  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d00ea9f98fb047',t:'MTc0Njc4MTc1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93d0619b8b767be1',t:'MTc0Njc4NTE1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+  </body>
 </html>
