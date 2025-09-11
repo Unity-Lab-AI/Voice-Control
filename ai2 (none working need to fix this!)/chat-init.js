@@ -516,7 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
             lastUserMsg.includes("picture") || 
             imagePatterns.some(p => p.pattern.test(lastUserMsg))
         );
-        const selectedModel = modelSelect.value || currentSession.model || "unity";
+        const selectedModel = modelSelect.value || currentSession.model || "openai";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, nonce };
         const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(selectedModel)}`;

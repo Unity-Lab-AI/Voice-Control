@@ -166,10 +166,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // If no valid models were returned, provide a sane fallback.
             if (!hasValidModel) {
                 const fallbackOpt = document.createElement("option");
-                fallbackOpt.value = "unity";
-                fallbackOpt.textContent = "unity";
+                fallbackOpt.value = "openai";
+                fallbackOpt.textContent = "openai";
                 modelSelect.appendChild(fallbackOpt);
-                modelSelect.value = "unity";
+                modelSelect.value = "openai";
             }
 
             // Preserve the model from the current session if possible.
@@ -188,22 +188,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.warn(`Model ${currentSession.model} not found in fetched list. Added as unavailable option.`);
                 }
             } else {
-                const unityOptionExists = Array.from(modelSelect.options).some(option => option.value === "unity");
-                if (unityOptionExists) {
-                    modelSelect.value = "unity";
+                const defaultOptionExists = Array.from(modelSelect.options).some(option => option.value === "openai");
+                if (defaultOptionExists) {
+                    modelSelect.value = "openai";
                 }
             }
         } catch (err) {
             console.error("Failed to fetch text models:", err);
             modelSelect.innerHTML = "";
             const fallbackOpt = document.createElement("option");
-            fallbackOpt.value = "unity";
-            fallbackOpt.textContent = "unity";
+            fallbackOpt.value = "openai";
+            fallbackOpt.textContent = "openai";
             modelSelect.appendChild(fallbackOpt);
-            modelSelect.value = "unity";
+            modelSelect.value = "openai";
 
             const currentSession = Storage.getCurrentSession();
-            if (currentSession && currentSession.model && currentSession.model !== "unity") {
+            if (currentSession && currentSession.model && currentSession.model !== "openai") {
                 const sessOpt = document.createElement("option");
                 sessOpt.value = currentSession.model;
                 sessOpt.textContent = `${currentSession.model} (From Session - May Be Unavailable)`;

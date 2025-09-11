@@ -159,11 +159,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (!hasValidModel) {
                     const fallbackOpt = document.createElement("option");
-                    fallbackOpt.value = "unity";
-                    fallbackOpt.textContent = "Unity (Fallback - No Valid Models)";
+                    fallbackOpt.value = "openai";
+                    fallbackOpt.textContent = "OpenAI (Fallback - No Valid Models)";
                     modelSelect.appendChild(fallbackOpt);
-                    modelSelect.value = "unity";
-                    console.warn("No valid models found. Using Unity fallback.");
+                    modelSelect.value = "openai";
+                    console.warn("No valid models found. Using OpenAI fallback.");
                 }
 
                 const currentSession = Storage.getCurrentSession();
@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         console.warn(`Model ${currentSession.model} not found in fetched list. Added as unavailable option.`);
                     }
                 } else if (!modelSelect.value) {
-                    modelSelect.value = "unity";
+                    modelSelect.value = "openai";
                 }
             })
             .catch(err => {
@@ -193,13 +193,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 modelSelect.innerHTML = "";
                 const fallbackOpt = document.createElement("option");
-                fallbackOpt.value = "unity";
-                fallbackOpt.textContent = "Unity (Fallback - API Unavailable)";
+                fallbackOpt.value = "openai";
+                fallbackOpt.textContent = "OpenAI (Fallback - API Unavailable)";
                 modelSelect.appendChild(fallbackOpt);
-                modelSelect.value = "unity";
+                modelSelect.value = "openai";
 
                 const currentSession = Storage.getCurrentSession();
-                if (currentSession && currentSession.model && currentSession.model !== "unity") {
+                if (currentSession && currentSession.model && currentSession.model !== "openai") {
                     const sessOpt = document.createElement("option");
                     sessOpt.value = currentSession.model;
                     sessOpt.textContent = `${currentSession.model} (From Session - May Be Unavailable)`;
