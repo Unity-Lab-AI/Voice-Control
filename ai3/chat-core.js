@@ -692,10 +692,12 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         const selectedModel = modelSelect.value || currentSession.model || "unity";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
+        const seed = randomSeed();
         const body = { messages, model: selectedModel, nonce };
         const params = new URLSearchParams();
-        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
+        params.set("token", POLLINATIONS_TOKEN || "");
         params.set("model", selectedModel);
+        params.set("seed", seed);
         const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
         console.log("Sending API request with payload:", JSON.stringify(body));
         fetch(apiUrl, {

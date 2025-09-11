@@ -167,13 +167,14 @@ document.addEventListener("DOMContentLoaded", () => {
             { role: "user", content: metaPrompt }
         ];
         const seed = generateSeed();
+        const textModelSelect = document.getElementById("model-select");
         const body = {
             messages,
-            model: "unity",
+            model: textModelSelect ? textModelSelect.value : "unity",
             nonce: Date.now().toString() + Math.random().toString(36).substring(2)
         };
         const params = new URLSearchParams();
-        if (POLLINATIONS_TOKEN) params.set("token", POLLINATIONS_TOKEN);
+        params.set("token", POLLINATIONS_TOKEN || "");
         params.set("model", body.model);
         params.set("seed", seed);
         const apiUrl = `https://text.pollinations.ai/openai?${params.toString()}`;
