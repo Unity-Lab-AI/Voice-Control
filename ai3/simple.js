@@ -1,4 +1,9 @@
+// Wait for the DOM to be fully parsed before manipulating the page.
+// This ensures that elements are available when we inject our Simple Mode UI.
 document.addEventListener("DOMContentLoaded", () => {
+    // Build a <style> tag containing all of the CSS needed for Simple Mode.
+    // Injecting styles dynamically keeps this file self‑contained and avoids
+    // having to maintain a separate stylesheet for the modal interface.
     const style = document.createElement("style");
     style.textContent = `
         #simple-mode-modal {
@@ -181,6 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
     document.head.appendChild(style);
 
+    // Primary entry point for Simple Mode. This function constructs the modal
+    // chat interface, wires up its event handlers, and populates it with any
+    // existing conversation history stored in `Storage`.
     function openSimpleMode() {
         const existingModal = document.getElementById("simple-mode-modal");
         if (existingModal) existingModal.remove();
@@ -292,6 +300,9 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 
+        // Render a new message bubble in the chat area. Handles both user and
+        // AI messages, including parsing any image URLs returned by the AI and
+        // attaching appropriate action buttons for AI responses.
         function appendSimpleMessage(role, content, index) {
             const container = document.createElement("div");
             container.classList.add("simple-message");
@@ -388,6 +399,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // Create a container for an AI‑generated image. The element includes a
+        // temporary loading spinner and registers a unique ID so that button
+        // listeners can be reattached if the chat is re-rendered.
         function createSimpleImageElement(url, msgIndex) {
             const imageId = `simple-img-${msgIndex}-${Date.now()}`;
             localStorage.setItem(`simpleImageId_${msgIndex}`, imageId);
@@ -432,6 +446,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return imageContainer;
         }
 
+        // Once an image has loaded, attach the various action buttons
+        // (copy/download/refresh/open) that allow the user to interact with it.
+        // The buttons are tied to a unique image ID to support re-rendering.
         function attachImageButtonListeners(img, imageId) {
             const imgButtonContainer = document.querySelector(`.simple-image-button-container[data-image-id="${imageId}"]`);
             if (!imgButtonContainer) {
@@ -491,6 +508,8 @@ document.addEventListener("DOMContentLoaded", () => {
             imgButtonContainer.appendChild(openImgBtn);
         }
 
+        // Copy the rendered image to the user's clipboard and persist a
+        // base64 version in localStorage so it can be referenced later.
         function copyImage(img, imageId) {
             console.log(`Copying image with ID: ${imageId} in simple mode`);
             if (!img.complete || img.naturalWidth === 0) {
@@ -525,6 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // Trigger a browser download for the given image element. The image is
+        // fetched as a blob so that we can generate a temporary download link.
         function downloadImage(img, imageId) {
             console.log(`Downloading image with ID: ${imageId} in simple mode`);
             if (!img.src) {
@@ -553,6 +574,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         }
 
+        // Replace the displayed Pollinations image with a new one by tweaking
+        // its random seed parameter. Shows a temporary spinner while the new
+        // image is fetched.
         function refreshImage(img, imageId) {
             console.log(`Refreshing image with ID: ${imageId} in simple mode`);
             if (!img.src || !img.src.includes("image.pollinations.ai")) {
@@ -590,6 +614,8 @@ document.addEventListener("DOMContentLoaded", () => {
             img.src = newUrl;
         }
 
+        // Convenience helper to view the generated image outside of the chat
+        // interface. Opens the image URL in a separate browser tab.
         function openImageInNewTab(img, imageId) {
             console.log(`Opening image in new tab with ID: ${imageId} in simple mode`);
             if (!img.src) {
@@ -600,6 +626,9 @@ document.addEventListener("DOMContentLoaded", () => {
             window.showToast("Image opened in new tab");
         }
 
+        // Allows the user to regenerate an AI response. The function trims all
+        // messages after the user's last input and requests a new completion
+        // from the server, effectively redoing the assistant's reply.
         function reGenerateEntireResponse(aiMsgIndex) {
             console.log(`Re-generating entire response for index: ${aiMsgIndex} in simple mode`);
             const currentSession = Storage.getCurrentSession();
@@ -648,14 +677,19 @@ document.addEventListener("DOMContentLoaded", () => {
             }, userMessage);
         }
 
+        // Tear down the modal and remove all Simple Mode elements from the DOM.
         function closeSimpleMode() {
             const modal = document.getElementById("simple-mode-modal");
             if (modal) modal.remove();
         }
     }
 
+    // Expose the openSimpleMode function globally so other scripts or UI
+    // elements can trigger Simple Mode on demand.
     window.openSimpleMode = openSimpleMode;
 
+    // If a button with id="toggle-simple-mode" exists on the page, hook it up
+    // so clicking it will launch the modal chat interface.
     if (document.getElementById("toggle-simple-mode")) {
         document.getElementById("toggle-simple-mode").addEventListener("click", () => {
             openSimpleMode();
