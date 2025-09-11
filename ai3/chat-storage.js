@@ -1,6 +1,18 @@
+/**
+ * Entry point for the chat UI logic. Once the DOM is ready the functions
+ * within initialize storage handling, message rendering and voice features.
+ */
 document.addEventListener("DOMContentLoaded", () => {
     const { chatBox, chatInput, clearChatBtn, voiceToggleBtn, modelSelect, synth, autoSpeakEnabled, speakMessage, stopSpeaking, showToast, toggleSpeechRecognition, initSpeechRecognition, processAIInstructions, handleVoiceCommand, speakSentences } = window._chatInternals;
     const imagePatterns = window.imagePatterns;
+    /**
+     * Create a human readable title for a session by using the first
+     * AI generated message. Markdown formatting and other special
+     * characters are stripped and the result is truncated to 50 chars.
+     *
+     * @param {Array<{role: string, content: string}>} messages - Messages in the session.
+     * @returns {string} A sanitized session title.
+     */
     function generateSessionTitle(messages) {
         let title = "";
         for (let i = 0; i < messages.length; i++) {
@@ -13,6 +25,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (title.length > 50) title = title.substring(0, 50) + "...";
         return title;
     }
+    /**
+     * Ensure that the active session has a descriptive title. When the
+     * session is still named "New Chat" a new title is generated from
+     * the existing messages and persisted to storage.
+     */
     function checkAndUpdateSessionTitle() {
         const currentSession = Storage.getCurrentSession();
         if (!currentSession.name || currentSession.name === "New Chat") {
@@ -22,6 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
+    /**
+     * Apply Prism.js syntax highlighting to every <code> block currently
+     * rendered inside the chat box.
+     */
     function highlightAllCodeBlocks() {
         if (!window.Prism) {
             return;
@@ -31,6 +52,17 @@ document.addEventListener("DOMContentLoaded", () => {
             Prism.highlightElement(block);
         });
     }
+    /**
+     * Render a chat message in the conversation window. AI messages are
+     * parsed for code snippets and image URLs which are displayed with
+     * additional controls such as copy, speak and regenerate buttons.
+     *
+     * @param {Object} params - Details about the message.
+     * @param {"user"|"ai"} params.role - The author of the message.
+     * @param {string} params.content - Raw message text.
+     * @param {number} params.index - Index of the message in session history.
+     * @param {string[]} [params.imageUrls=[]] - Optional list of images to render.
+     */
     function appendMessage({ role, content, index, imageUrls = [] }) {
         const container = document.createElement("div");
         container.classList.add("message");
@@ -170,6 +202,12 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
         highlightAllCodeBlocks();
     }
+    /**
+     * Trigger a download of the provided code snippet as a plain text file.
+     *
+     * @param {string} codeContent - The code to save.
+     * @param {string} language - The programming language used in the snippet.
+     */
     function downloadCodeAsTxt(codeContent, language) {
         const blob = new Blob([codeContent], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
@@ -182,6 +220,14 @@ document.addEventListener("DOMContentLoaded", () => {
         URL.revokeObjectURL(url);
         showToast("Code downloaded as .txt");
     }
+    /**
+     * Build the DOM structure that displays an AI generated image. A loading
+     * spinner is shown until the image is loaded and a button container is
+     * prepared for further actions.
+     *
+     * @param {string} url - Source URL of the image.
+     * @returns {HTMLDivElement} Wrapper element containing the image and buttons.
+     */
     function createImageElement(url) {
         const imageId = `voice-img-${Date.now()}`;
         localStorage.setItem(`voiceImageId_${imageId}`, imageId);
@@ -220,6 +266,13 @@ document.addEventListener("DOMContentLoaded", () => {
         imageContainer.appendChild(imgButtonContainer);
         return imageContainer;
     }
+    /**
+     * Add copy, download, refresh and open-in-new-tab buttons to a generated
+     * image. Existing buttons are cleared before attaching new listeners.
+     *
+     * @param {HTMLImageElement} img - The target image element.
+     * @param {string} imageId - Unique identifier used to track the image.
+     */
     function attachImageButtons(img, imageId) {
         const imgButtonContainer = document.querySelector(`.image-button-container[data-image-id="${imageId}"]`);
         if (!imgButtonContainer) {
@@ -273,6 +326,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         imgButtonContainer.appendChild(openImgBtn);
     }
+    /**
+     * Copy an image to the clipboard and store a base64 representation in
+     * local storage for later reuse.
+     *
+     * @param {HTMLImageElement} img - The image element to copy.
+     * @param {string} imageId - Identifier used for logging and storage keys.
+     */
     function copyImage(img, imageId) {
         console.log(`Copying image with ID: ${imageId}`);
         if (!img.complete || img.naturalWidth === 0) {
@@ -306,6 +366,13 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("Failed to copy image due to CORS or other error: " + err.message);
         }
     }
+    /**
+     * Download the provided image by fetching it as a blob and creating a
+     * temporary anchor element to trigger the browser download prompt.
+     *
+     * @param {HTMLImageElement} img - The image element to download.
+     * @param {string} imageId - Identifier used in file naming and logs.
+     */
     function downloadImage(img, imageId) {
         console.log(`Downloading image with ID: ${imageId}`);
         if (!img.src) {
@@ -333,6 +400,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 showToast("Failed to download image: " + err.message);
             });
     }
+    /**
+     * Request a new Pollinations image using a random seed and replace the
+     * current image while displaying a loading spinner.
+     *
+     * @param {HTMLImageElement} img - The image element to refresh.
+     * @param {string} imageId - Identifier used for logging and storage.
+     */
     function refreshImage(img, imageId) {
         console.log(`Refreshing image with ID: ${imageId}`);
         if (!img.src || !img.src.includes("image.pollinations.ai")) {
@@ -367,6 +441,12 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         img.src = newUrl;
     }
+    /**
+     * Open the full sized image in a new browser tab.
+     *
+     * @param {HTMLImageElement} img - The image element containing the URL.
+     * @param {string} imageId - Identifier used for logging purposes.
+     */
     function openImageInNewTab(img, imageId) {
         console.log(`Opening image in new tab with ID: ${imageId}`);
         if (!img.src) {
@@ -376,6 +456,11 @@ document.addEventListener("DOMContentLoaded", () => {
         window.open(img.src, "_blank");
         showToast("Image opened in new tab");
     }
+    /**
+     * Render an array of stored chat messages to the UI.
+     *
+     * @param {Array<{role: string, content: string}>} messages - History to render.
+     */
     function renderStoredMessages(messages) {
         console.log("Rendering stored messages...");
         chatBox.innerHTML = "";
@@ -394,6 +479,12 @@ document.addEventListener("DOMContentLoaded", () => {
         chatInput.disabled = false;
         chatInput.focus();
     }
+    /**
+     * Persist a new message to the current session and immediately append it
+     * to the chat view.
+     *
+     * @param {{role: string, content: string}} param0 - Message data.
+     */
     window.addNewMessage = function ({ role, content }) {
         const currentSession = Storage.getCurrentSession();
         currentSession.messages.push({ role, content });
@@ -408,6 +499,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         if (role === "ai") checkAndUpdateSessionTitle();
     };
+    /**
+     * Prompt the user to edit the specified message and update storage. If
+     * the message belonged to the user a new AI response is requested.
+     *
+     * @param {number} msgIndex - Index of the message to edit.
+     */
     function editMessage(msgIndex) {
         const currentSession = Storage.getCurrentSession();
         const oldMessage = currentSession.messages[msgIndex];
@@ -443,6 +540,13 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast("AI message updated");
         }
     }
+    /**
+     * Regenerate an AI response by re-sending the preceding user message to
+     * the backend. The AI message at the provided index is replaced with the
+     * new response.
+     *
+     * @param {number} aiIndex - Index of the AI message to replace.
+     */
     function reGenerateAIResponse(aiIndex) {
         console.log(`Re-generating AI response for index: ${aiIndex}`);
         const currentSession = Storage.getCurrentSession();
@@ -516,6 +620,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    /**
+     * Display an introductory modal when the application is opened for the
+     * first time. A flag in localStorage ensures it is only shown once.
+     */
     function checkFirstLaunch() {
         const firstLaunch = localStorage.getItem("firstLaunch") === "0";
         if (firstLaunch) {
@@ -546,6 +654,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     checkFirstLaunch();
+    /**
+     * Create and configure the voice input button if browser speech
+     * recognition is available. Otherwise disable the control.
+     */
     function setupVoiceInputButton() {
         if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
             const inputButtonsContainer = document.querySelector(".input-buttons-container");
@@ -579,6 +691,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, true);
     const sendButton = document.getElementById("send-button");
+    /**
+     * Send the text currently in the input box as a user message and trigger
+     * the AI response flow.
+     */
     function handleSendMessage() {
         const message = chatInput.value.trim();
         if (message === "") return;
@@ -622,6 +738,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const openVoiceSettingsModalBtn = document.getElementById("open-voice-settings-modal");
     const voiceChatImage = document.getElementById("voice-chat-image");
     let slideshowInterval = null;
+    /**
+     * Begin rotating Pollinations images based on the latest chat message.
+     * Images are refreshed every 10 seconds while voice chat is active.
+     */
     function startVoiceChatSlideshow() {
         if (slideshowInterval) clearInterval(slideshowInterval);
         const currentSession = Storage.getCurrentSession();
@@ -638,6 +758,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (imagePrompt.length > 100) {
             imagePrompt = imagePrompt.substring(0, 100);
         }
+        /**
+         * Load a new image into the slideshow using a random seed.
+         */
         function updateImage() {
             const seed = Math.floor(Math.random() * 1000000);
             const imageId = `voice-img-${Date.now()}`;
@@ -655,6 +778,9 @@ document.addEventListener("DOMContentLoaded", () => {
         updateImage();
         slideshowInterval = setInterval(updateImage, 10000);
     }
+    /**
+     * Stop the voice chat slideshow if it is running.
+     */
     function stopVoiceChatSlideshow() {
         if (slideshowInterval) {
             clearInterval(slideshowInterval);
@@ -663,6 +789,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     let voiceBuffer = "";
     let silenceTimeout = null;
+    /**
+     * Initialize a SpeechRecognition instance with the required event
+     * handlers for voice chat. The instance is created lazily so the
+     * function returns a boolean indicating availability.
+     *
+     * @returns {boolean} True if speech recognition is available.
+     */
     function setupCustomSpeechRecognition() {
         if (!window._chatInternals.recognition) {
             if ('webkitSpeechRecognition' in window) {
@@ -740,6 +873,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         return true;
     }
+    /**
+     * Build the controls shown inside the voice chat modal including the
+     * voice selection dropdown and start/stop listening buttons.
+     */
     function setupVoiceChatControls() {
         const modalBody = voiceChatModal.querySelector(".modal-body");
         let voiceSelectChat = modalBody.querySelector("#voice-select-voicechat");
@@ -807,6 +944,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    /**
+     * Ensure all voice selection dropdowns reflect the same selected voice.
+     *
+     * @param {number|string} selectedIndex - Index of the chosen voice.
+     */
     function updateAllVoiceDropdowns(selectedIndex) {
         const voiceDropdownIds = [
             "voice-select",
