@@ -1,5 +1,18 @@
+/**
+ * Memory API
+ * ----------
+ * Provides a simple wrapper around the Storage API for reading and
+ * manipulating persistent "memory" entries used by the chat application.
+ * The API is attached to `window.Memory` once the DOM is ready.
+ */
 document.addEventListener("DOMContentLoaded", () => {
+  // Expose the Memory helper on the global window object after the DOM is loaded.
   window.Memory = {
+    /**
+     * Retrieve all stored memory entries.
+     * Falls back to an empty array if the Storage API is unavailable.
+     * @returns {string[]} Array of memory strings.
+     */
     getMemories: function() {
       if (!window.Storage || typeof Storage.getMemories !== 'function') {
         console.warn("Storage API is missing or incomplete. Returning empty memory array.");
@@ -7,7 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       return Storage.getMemories() || [];
     },
-
+    /**
+     * Persist a new memory entry if it is a non-empty, unique string.
+     * @param {string} text - Memory text to store.
+     * @returns {boolean} True when the memory was added.
+     */
     addMemoryEntry: function(text) {
       if (!text || typeof text !== 'string' || text.trim() === '') {
         console.warn("Attempted to add an empty or invalid memory entry.");
@@ -35,7 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }
     },
-
+    /**
+     * Remove a memory entry at a specific index.
+     * @param {number} index - Zero-based index of memory to remove.
+     * @returns {boolean} True if removal succeeded.
+     */
     removeMemoryEntry: function(index) {
       const memories = this.getMemories();
       if (index < 0 || index >= memories.length) {
@@ -56,7 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }
     },
-
+    /**
+     * Delete all stored memories.
+     * @returns {boolean} True if clearing succeeded.
+     */
     clearAllMemories: function() {
       if (!window.Storage || typeof Storage.clearAllMemories !== 'function') {
         console.error("Storage API not available for clearAllMemories.");
@@ -71,7 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }
     },
-
+    /**
+     * Replace the memory entry at the given index with new text.
+     * @param {number} index - Zero-based index to update.
+     * @param {string} newText - Replacement memory text.
+     * @returns {boolean} True if update succeeded.
+     */
     updateMemoryEntry: function(index, newText) {
       const memories = this.getMemories();
       if (index < 0 || index >= memories.length) {
@@ -96,7 +125,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }
     },
-
+    /**
+     * Update a memory matching a pattern or add it if it does not exist.
+     * @param {string} pattern - Substring used to locate an existing memory.
+     * @param {string} newText - Text to add or replace.
+     * @returns {boolean} True if a memory was added or updated.
+     */
     updateOrAddMemory: function(pattern, newText) {
       const memories = this.getMemories();
       const index = memories.findIndex(mem => mem.includes(pattern));
@@ -106,7 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       return this.addMemoryEntry(newText);
     },
-
+    /**
+     * Convenience helper for persisting a user's voice response preference.
+     * @param {boolean} enabled - Whether spoken responses are preferred.
+     * @returns {boolean} True if the preference was stored.
+     */
     setVoicePreference: function(enabled) {
       const text = `Voice Preference: User prefers AI responses to be ${enabled ? 'spoken aloud' : 'not spoken'}.`;
       return this.updateOrAddMemory("Voice Preference:", text);
