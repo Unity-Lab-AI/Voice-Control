@@ -98,35 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let slideshowInterval = null;
 
     /**
-     * Sends a command to a Unity instance through the Pollinations API.
-     * Any textual response from the server is appended to the chat and
-     * optionally spoken aloud.
-     *
-     * @param {string} command - Command to forward to Unity.
-     * @param {string} [originalMessage=""] - Full user message that triggered
-     *   the command. Provided for context on the server.
-     */
-    async function sendUnityCommand(command, originalMessage = "") {
-        try {
-            const res = await window.pollinationsFetch("https://text.pollinations.ai/unity", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Accept: "application/json" },
-                body: JSON.stringify({ command, message: originalMessage, build: true }),
-                cache: "no-store",
-            });
-            const data = await res.json();
-            const reply = data.reply || data.response || "Command executed.";
-            window.addNewMessage({ role: "ai", content: reply });
-            if (autoSpeakEnabled) speakMessage(reply);
-        } catch (err) {
-            console.error("Unity command failed", err);
-            const errMsg = "Failed to execute Unity command.";
-            window.addNewMessage({ role: "ai", content: errMsg });
-            if (autoSpeakEnabled) speakMessage(errMsg);
-        }
-    }
-
-    /**
      * Parses instruction tags embedded in AI responses and performs simple
      * DOM manipulations such as clicking elements or setting input values.
      *
@@ -135,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
      * @returns {string} The response with instruction tags removed.
      */
     function processAIInstructions(text) {
-        return text.replace(/\[(CLICK|SET|UNITY):([^\]]+)\]/gi, (match, action, params) => {
+        return text.replace(/\[(CLICK|SET):([^\]]+)\]/gi, (match, action, params) => {
             const upper = action.toUpperCase();
             if (upper === "CLICK") {
                 const el = document.querySelector(params.trim());
@@ -147,8 +118,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     el.value = value?.trim() ?? "";
                     el.dispatchEvent(new Event('change'));
                 }
-            } else if (upper === "UNITY") {
-                sendUnityCommand(params.trim(), text);
             }
             return '';
         }).trim();
@@ -779,7 +748,7 @@ document.addEventListener("DOMContentLoaded", () => {
             lastUserMsg.includes("picture") ||
             imagePatterns.some(p => p.pattern.test(lastUserMsg))
         );
-        const selectedModel = modelSelect.value || currentSession.model || "unity";
+        const selectedModel = modelSelect.value || currentSession.model || "openai";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, nonce };
         const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(selectedModel)}`;
@@ -1025,7 +994,6 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleSpeechRecognition,
         processAIInstructions,
         handleVoiceCommand,
-        sendUnityCommand,
         findElement,
         executeCommand,
         showToast,
