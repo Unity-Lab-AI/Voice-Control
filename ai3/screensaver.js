@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Ask the backend for a fresh creative prompt, retrying on failure to
     // improve resilience when the service is flaky.
     async function fetchDynamicPromptWithRetry() {
-        const metaPrompt = "Generate an image prompt of something new and wild. Respond with text only.";
+        const metaPrompt = "Generate an image prompt of something new, explicit and crazy wild in your own way. Respond with text only.";
         const messages = [
             { role: "system", content: "Generate unique, wild image prompts as text only, under 100 characters." },
             { role: "user", content: metaPrompt }
@@ -757,3 +757,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Screensaver initialized with dynamic API prompts and streaming thumbnail gallery!");
 });
+
