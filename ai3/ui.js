@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // or returns invalid data.
     async function fetchPollinationsModels() {
         try {
-            const url = `https://text.pollinations.ai/models${POLLINATIONS_TOKEN ? `?token=${POLLINATIONS_TOKEN}` : ""}`;
+            const url = `https://text.pollinations.ai/models?token=${POLLINATIONS_TOKEN || ""}`;
             const res = await fetch(url, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
