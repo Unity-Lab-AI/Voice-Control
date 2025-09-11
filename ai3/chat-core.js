@@ -7,70 +7,12 @@
 // comments is to give a high level understanding of how pieces fit together.
 // ============================================================================
 
-// Global config for Pollinations API token
-window._pollinationsAPIConfig = window._pollinationsAPIConfig || {
-    // Token can be provided via process.env or a global variable set in a separate script.
-    token:
-        (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
-        window.POLLINATIONS_TOKEN ||
-        ""
-};
-
-// Global helper to retry Pollinations text API requests with exponential backoff.
-// Automatically appends `token` query parameter if not present.
-/**
- * Wrapper around `fetch` that automatically adds the Pollinations token and
- * retries failed requests using exponential backoff.
- *
- * @param {string} url - Endpoint to call.
- * @param {RequestInit} [options={}] - Fetch options.
- * @param {number} [retries=6] - How many times to retry on failure.
- * @param {number} [delay=4000] - Initial delay in milliseconds between retries.
- * @returns {Promise<Response>} Resolves with the successful `Response` object.
- */
-window.pollinationsFetch = async function (url, options = {}, retries = 6, delay = 4000) {
-    const cfg = window._pollinationsAPIConfig || {};
-    try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname.includes("pollinations.ai")) {
-            const token =
-                cfg.token ||
-                (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
-                window.POLLINATIONS_TOKEN;
-            if (token && !urlObj.searchParams.has("token")) {
-                urlObj.searchParams.set("token", token);
-            }
-        }
-        url = urlObj.toString();
-    } catch (err) {
-        console.warn("Invalid URL provided to pollinationsFetch:", url, err);
-    }
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                throw new Error(`Pollinations fetch failed with status ${response.status}`);
-            }
-            return response;
-        } catch (err) {
-            if (attempt === retries) throw err;
-            console.warn(
-                `Pollinations fetch attempt ${attempt + 1} failed, retrying in ${delay / 1000}s...`,
-                err
-            );
-            await new Promise((res) => setTimeout(res, delay));
-            delay *= 2;
-        }
-    }
-};
+const POLLINATIONS_TOKEN =
+    (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
+    window.POLLINATIONS_TOKEN ||
+    "";
 
 document.addEventListener("DOMContentLoaded", () => {
-    window._pollinationsAPIConfig.token =
-        window._pollinationsAPIConfig.token ||
-        (typeof process !== "undefined" && process.env?.POLLINATIONS_TOKEN) ||
-        window.POLLINATIONS_TOKEN ||
-        "";
 
     const chatBox = document.getElementById("chat-box");
     const chatInput = document.getElementById("chat-input");
@@ -751,9 +693,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedModel = modelSelect.value || currentSession.model || "openai";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, nonce };
-        const apiUrl = `https://text.pollinations.ai/${encodeURIComponent(selectedModel)}`;
+        const apiUrl = `https://text.pollinations.ai/openai/${encodeURIComponent(selectedModel)}?token=${POLLINATIONS_TOKEN}`;
         console.log("Sending API request with payload:", JSON.stringify(body));
-        window.pollinationsFetch(apiUrl, {
+        fetch(apiUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(body),
