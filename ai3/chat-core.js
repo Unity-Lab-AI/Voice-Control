@@ -693,7 +693,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const selectedModel = modelSelect.value || currentSession.model || "openai";
         const nonce = Date.now().toString() + Math.random().toString(36).substring(2);
         const body = { messages, model: selectedModel, nonce };
-        const apiUrl = `https://text.pollinations.ai/openai/${encodeURIComponent(selectedModel)}?token=${POLLINATIONS_TOKEN}`;
+        const tokenQuery = POLLINATIONS_TOKEN ? `?token=${POLLINATIONS_TOKEN}` : "";
+        const apiUrl = `https://text.pollinations.ai/openai/${encodeURIComponent(selectedModel)}${tokenQuery}`;
         console.log("Sending API request with payload:", JSON.stringify(body));
         fetch(apiUrl, {
             method: "POST",
